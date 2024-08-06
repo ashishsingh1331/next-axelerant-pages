@@ -1,23 +1,31 @@
 import Link from "next/link";
 import React from "react";
-import { GetServerSideProps, InferGetServerSidePropsType } from "next";
+import {
+  GetServerSideProps,
+  InferGetServerSidePropsType,
+  GetStaticPaths,
+  GetStaticProps,
+} from "next";
 
 export default function TodoDetialPage({
   todo,
-}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+  todoId,
+}: InferGetServerSidePropsType<typeof getStaticProps>) {
   return <h1>Todo - {todo.id}</h1>;
 }
-// Getserverside prop force the page to be dynamic page
-export const getServerSideProps = (async ({ params }) => {
+
+export const getStaticPaths = (async () => {
+  return { paths: [{ params: { todoId: "1" } }], fallback: "blocking" };
+}) satisfies GetStaticPaths;
+
+export const getStaticProps = (async ({ params }) => {
   const todoId = params?.todoId;
   const data = await fetch(
     `https://jsonplaceholder.typicode.com/todos/${todoId}`
-  ).then((response) => response.json());
+  ).then((res) => res.json());
 
-  if (data.id == null) {
-    return { notFound: true };
-  }
   return {
-    props: { todo: data },
+    props: { todo: data, todoId },
+    revalidate: 10,
   };
-}) satisfies GetServerSideProps;
+}) satisfies GetStaticProps;
